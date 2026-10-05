@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { AppBar, Card, ListRow, Button, AmountText } from "../novakit";
+import { AppBar, Card, Button, AmountText, Timeline } from "../novakit";
 import {
+  TODAY,
   PAYDAY,
   feeFor,
   daysUntil,
@@ -11,8 +12,9 @@ import {
 
 /**
  * Terms and accept, on one screen.
- * Everything the user agrees to sits above the buttons, and the Accept
- * label repeats the amount and the date (decision 11).
+ * Top: what you get, what you repay and when, side by side.
+ * Then a timeline of what happens next, including the payday pull and
+ * the default rule. The Accept label repeats the amount and the date.
  */
 export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
   const [submitting, setSubmitting] = useState(false);
@@ -20,7 +22,7 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
 
   const fee = feeFor(amount);
   const total = amount + fee;
-  const days = daysUntil(PAYDAY);
+  const yearly = yearlyRatePercent(daysUntil(PAYDAY));
   const payday = formatDate(PAYDAY, { weekday: true });
   const paydayShort = formatDate(PAYDAY);
 
@@ -32,59 +34,54 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
     setTimeout(() => onAccepted({ amount, fee, total }), 1200);
   }
 
+  const steps = [
+    {
+      key: "today",
+      when: `Today, ${formatDate(TODAY)}`,
+      title: `${formatRs(amount)} lands in your wallet`,
+    },
+    {
+      key: "payday",
+      when: `${payday}, your payday`,
+      title: `We take ${formatRs(total)} after your salary arrives`,
+      body: "Not enough in your wallet? We take nothing, let you know, and try again when it lands.",
+    },
+    {
+      key: "default",
+      tone: "muted",
+      when: "If it's still unpaid 30 days later",
+      title: "It's marked as default",
+      body: "No late fee. You just can't take another advance until it's repaid.",
+    },
+  ];
+
   return (
     <>
       <AppBar title="Salary advance" onBack={submitting ? null : onBack} />
 
       <main className="p-4 space-y-4">
-        <section>
-          <div className="text-caption text-neutral-700">You get</div>
-          <AmountText amount={amount} size="display" className="block mt-1" />
-          <p className="text-body text-neutral-700 mt-1">
-            Paid into your NovaPay wallet today.
-          </p>
-        </section>
-
-        <Card className="py-1">
-          <h2 className="sr-only">What it costs</h2>
-          <ListRow title="You get" trailing={<AmountText amount={amount} size="body" />} />
-          <ListRow
-            title="One-time fee (3%)"
-            trailing={<AmountText amount={fee} size="body" />}
-          />
-          <ListRow
-            title={<span className="font-semibold">You repay</span>}
-            trailing={<AmountText amount={total} size="body" className="font-semibold" />}
-          />
-          <ListRow
-            title="Repayment date"
-            subtitle={`Your payday, in ${days} days`}
-            trailing={<span className="text-body text-neutral-900">{payday}</span>}
-          />
-        </Card>
-
-        <p className="text-caption text-neutral-700 px-1">
-          As a yearly rate, this is about {yearlyRatePercent(days)}%. It's a single
-          fee, not interest. The rate is here so you can compare with other loans.
-        </p>
-
         <Card className="space-y-3">
-          <h2 className="text-body font-semibold text-neutral-900">How you repay</h2>
-          <ul className="space-y-2 text-body text-neutral-700 list-disc pl-5">
-            <li>
-              On {paydayShort}, after your salary arrives, we take {formatRs(total)} from
-              your NovaPay wallet.
-            </li>
-            <li>
-              If there isn't enough, we don't take part of it. We tell you, and try again
-              when your salary lands.
-            </li>
-            <li>
-              No late fee. If it's 30 days unpaid, it's marked as default and you can't
-              take another advance until it's repaid.
-            </li>
-          </ul>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-caption text-neutral-700">You get</div>
+              <AmountText amount={amount} size="title" className="block font-bold" />
+              <div className="text-body text-neutral-700">today</div>
+            </div>
+            <div>
+              <div className="text-caption text-neutral-700">You repay</div>
+              <AmountText amount={total} size="title" className="block font-bold" />
+              <div className="text-body text-neutral-700">on {payday}</div>
+            </div>
+          </div>
+          <p className="border-t border-neutral-200 pt-3 text-body text-neutral-700">
+            {formatRs(fee)} fee, charged once. About {yearly}% as a yearly rate.
+          </p>
         </Card>
+
+        <section className="px-1">
+          <h2 className="text-body font-semibold text-neutral-900 mb-3">What happens next</h2>
+          <Timeline items={steps} />
+        </section>
 
         <div className="space-y-3 pt-1 pb-2">
           <Button

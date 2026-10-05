@@ -28,5 +28,14 @@ export function formatDate(date, { weekday = false } = {}) {
 }
 
 export function formatRs(amount) {
-  return "Rs " + new Intl.NumberFormat("en-PK").format(amount);
+  return "Rs\u00A0" + new Intl.NumberFormat("en-PK").format(amount);
+}
+
+// Assumption: one reminder, 3 days before payday.
+export const REMINDER_DAYS_BEFORE = 3;
+
+export function reminderDate() {
+  const d = new Date(PAYDAY);
+  d.setDate(d.getDate() - REMINDER_DAYS_BEFORE);
+  return d;
 }

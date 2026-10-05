@@ -20,7 +20,7 @@ export default function AmountText({ amount, size = "title", className = "" }) {
   const formatted = new Intl.NumberFormat("en-PK").format(amount);
   return (
     <span className={`${sizeClass} text-neutral-900 tabular-nums ${className}`}>
-      Rs {formatted}
+      Rs&nbsp;{formatted}
     </span>
   );
 }
