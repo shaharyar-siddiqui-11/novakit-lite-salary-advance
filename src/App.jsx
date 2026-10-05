@@ -47,7 +47,7 @@ export default function App() {
     go("home");
   }
 
-  // Stand-in for the eligibility check behind "See your offer".
+  // Stand-in for the eligibility check behind "Check if you can borrow".
   function handleSeeOffer() {
     go(DECLINES.includes(scenario) ? "declined" : "offer");
   }
@@ -153,15 +153,17 @@ function HomeScreen({ onSeeOffer }) {
           </div>
         </Card>
 
+        {/* Salary advance entry: easy to find, no push (decision 8).
+            No amount shown before the check has run. */}
         <Card className="space-y-3">
           <div>
-            <div className="text-title text-neutral-900">Need cash before payday?</div>
-            <div className="text-body text-neutral-700 mt-1">
-              You may qualify for a NovaPay salary advance.
-            </div>
+            <h2 className="text-body font-semibold text-neutral-900">Salary advance</h2>
+            <p className="text-body text-neutral-700">
+              Borrow until payday, for a one-time 3% fee.
+            </p>
           </div>
-          <Button size="lg" onClick={handleClick} loading={checking} loadingLabel="Checking">
-            See your offer
+          <Button variant="secondary" onClick={handleClick} loading={checking} loadingLabel="Checking">
+            Check if you can borrow
           </Button>
         </Card>
 
