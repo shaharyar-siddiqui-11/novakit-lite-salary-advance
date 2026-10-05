@@ -230,7 +230,7 @@ function HomeScreen({ late, active, failCheck, onSeeOffer, onSeeLate }) {
                 title={<h2 className="font-semibold">Salary advance</h2>}
                 subtitle={
                   <span className="text-body">
-                    {formatRs(active.total)} due on {formatDate(PAYDAY, { long: true })}.
+                    {formatRs(active.total)} due on {formatDate(PAYDAY, { long: true, weekday: false })}.
                   </span>
                 }
               />
@@ -245,7 +245,7 @@ function HomeScreen({ late, active, failCheck, onSeeOffer, onSeeLate }) {
                 title={<h2 className="font-semibold">Salary advance</h2>}
                 subtitle={
                   <span className="text-body">
-                    {formatRs(LATE_TOTAL)} was due on {formatDate(PAYDAY, { long: true })}.
+                    {formatRs(LATE_TOTAL)} was due on {formatDate(PAYDAY, { long: true, weekday: false })}.
                   </span>
                 }
               />

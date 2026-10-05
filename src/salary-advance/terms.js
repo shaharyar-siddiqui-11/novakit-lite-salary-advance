@@ -33,17 +33,19 @@ export function yearlyRatePercent(days) {
 }
 
 // Long form for sentences ("Tuesday, 28th July").
+// Long without the weekday for one-line cards ("28th July").
 // Short form only where space is tight ("28 Jul").
-export function formatDate(date, { long = false } = {}) {
+export function formatDate(date, { long = false, weekday = true } = {}) {
   if (!long) {
     return date
       .toLocaleDateString("en-GB", { day: "numeric", month: "short" })
       .replace(" ", "\u00A0");
   }
-  const weekday = date.toLocaleDateString("en-GB", { weekday: "long" });
   const month = date.toLocaleDateString("en-GB", { month: "long" });
   // The whole date stays on one line.
-  return `${weekday},\u00A0${ordinal(date.getDate())}\u00A0${month}`;
+  const day = `${ordinal(date.getDate())}\u00A0${month}`;
+  if (!weekday) return day;
+  return `${date.toLocaleDateString("en-GB", { weekday: "long" })},\u00A0${day}`;
 }
 
 function ordinal(n) {
