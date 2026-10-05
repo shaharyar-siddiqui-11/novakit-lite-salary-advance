@@ -52,7 +52,7 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
       tone: "muted",
       when: "If it's late",
       title: "No late fee",
-      body: "You can't take another advance until this one is repaid.",
+      body: "You can't take another advance until this one is repaid. After 30 days unpaid, it's recorded as a default, which means an unpaid loan.",
     },
   ];
 
@@ -90,13 +90,9 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
             onClick={handleAccept}
             loading={submitting}
             loadingLabel="Sending your advance"
+            holdHint={<AcceptLabel first="Keep holding to accept" total={total} date={paydayShort} />}
           >
-            <span className="flex flex-col leading-tight">
-              <span>Hold to accept</span>
-              <span className="font-normal">
-                Repay {formatRs(total)} on {paydayShort}
-              </span>
-            </span>
+            <AcceptLabel first="Hold to accept" total={total} date={paydayShort} />
           </Button>
           <Button variant="secondary" onClick={onDecline} disabled={submitting}>
             No thanks
@@ -104,5 +100,16 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
         </div>
       </main>
     </>
+  );
+}
+
+function AcceptLabel({ first, total, date }) {
+  return (
+    <span className="flex flex-col leading-tight">
+      <span>{first}</span>
+      <span className="font-normal">
+        Repay {formatRs(total)} on {date}
+      </span>
+    </span>
   );
 }
