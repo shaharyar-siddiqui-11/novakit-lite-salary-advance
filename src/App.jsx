@@ -10,18 +10,23 @@ import OfferScreen from "./salary-advance/OfferScreen.jsx";
 import PayLessScreen from "./salary-advance/PayLessScreen.jsx";
 import TermsScreen from "./salary-advance/TermsScreen.jsx";
 import SuccessScreen from "./salary-advance/SuccessScreen.jsx";
+import DeclineScreen from "./salary-advance/DeclineScreen.jsx";
 import { amountAfterCheck } from "./salary-advance/terms";
 
 const SCENARIOS = [
-  { id: "full", label: "Full amount" },
-  { id: "less", label: "Pays less" },
+  { id: "full", label: "Approved, full amount" },
+  { id: "less", label: "Approved, pays less" },
+  { id: "income_unverified", label: "Declined: income not confirmed" },
+  { id: "credit_score", label: "Declined: credit history" },
+  { id: "other", label: "Declined: other reason" },
 ];
+const DECLINES = ["income_unverified", "credit_score", "other"];
 
 /**
  * NovaPay home screen plus the salary-advance flow, in a mobile frame.
  * On a real phone the frame fills the screen; on wider screens it shows
- * as a 390px device. The scenario bar above the frame is for reviewers
- * and is not part of the app.
+ * as a 390px device. The scenario picker above the frame is for
+ * reviewers and is not part of the app.
  */
 export default function App() {
   const [scenario, setScenario] = useState("full");
@@ -40,6 +45,11 @@ export default function App() {
     setApproved(null);
     setAdvance(null);
     go("home");
+  }
+
+  // Stand-in for the eligibility check behind "See your offer".
+  function handleSeeOffer() {
+    go(DECLINES.includes(scenario) ? "declined" : "offer");
   }
 
   function handleChecked(amount) {
@@ -61,7 +71,9 @@ export default function App() {
 
       {/* Mobile frame */}
       <div className="relative w-full max-w-[390px] min-h-screen sm:min-h-[780px] bg-white sm:rounded-[28px] sm:shadow-xl overflow-hidden sm:border sm:border-neutral-300">
-        {screen === "home" && <HomeScreen onSeeOffer={() => go("offer")} />}
+        {screen === "home" && <HomeScreen onSeeOffer={handleSeeOffer} />}
+
+        {screen === "declined" && <DeclineScreen reason={scenario} onHome={reset} />}
 
         {screen === "offer" && (
           <OfferScreen initialAmount={requested} onBack={reset} onContinue={handleChecked} />
@@ -103,33 +115,32 @@ export default function App() {
 
 function ScenarioBar({ value, onChange }) {
   return (
-    <div
-      role="group"
-      aria-label="Prototype scenario"
-      className="w-full max-w-[390px] px-4 py-2 sm:px-0 sm:py-0 flex items-center gap-2 text-caption text-neutral-700"
-    >
+    <label className="w-full max-w-[390px] px-4 py-2 sm:px-0 sm:py-0 flex items-center gap-2 text-caption text-neutral-700">
       <span className="shrink-0">Prototype:</span>
-      {SCENARIOS.map((s) => (
-        <button
-          key={s.id}
-          type="button"
-          aria-pressed={value === s.id}
-          onClick={() => onChange(s.id)}
-          className={
-            "min-h-9 px-3 whitespace-nowrap rounded-full border focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand " +
-            (value === s.id
-              ? "bg-neutral-900 text-white border-neutral-900"
-              : "bg-white text-neutral-900 border-neutral-500")
-          }
-        >
-          {s.label}
-        </button>
-      ))}
-    </div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="min-h-9 min-w-0 flex-1 px-2 rounded-sm border border-neutral-500 bg-white text-body text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
+      >
+        {SCENARIOS.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
 function HomeScreen({ onSeeOffer }) {
+  const [checking, setChecking] = useState(false);
+
+  function handleClick() {
+    if (checking) return;
+    setChecking(true);
+    setTimeout(onSeeOffer, 1000);
+  }
+
   return (
     <>
       <AppBar title="NovaPay" />
@@ -149,7 +160,7 @@ function HomeScreen({ onSeeOffer }) {
               You may qualify for a NovaPay salary advance.
             </div>
           </div>
-          <Button size="lg" onClick={onSeeOffer}>
+          <Button size="lg" onClick={handleClick} loading={checking} loadingLabel="Checking">
             See your offer
           </Button>
         </Card>

@@ -56,3 +56,12 @@ export function reminderDate() {
   d.setDate(d.getDate() - REMINDER_DAYS_BEFORE);
   return d;
 }
+
+// Assumption: a declined user can apply again 30 days later.
+export const RETRY_DAYS = 30;
+
+export function retryDate() {
+  const d = new Date(TODAY);
+  d.setDate(d.getDate() + RETRY_DAYS);
+  return d;
+}
