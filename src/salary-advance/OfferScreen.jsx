@@ -30,7 +30,7 @@ export default function OfferScreen({ initialAmount = null, onBack, onContinue }
             How much do you need?
           </h2>
           <p className="text-body text-neutral-700">
-            You repay it on your payday, {formatDate(PAYDAY, { long: true })}.
+            You repay it on {formatDate(PAYDAY, { long: true })}. That's your payday.
           </p>
         </section>
 
@@ -45,7 +45,7 @@ export default function OfferScreen({ initialAmount = null, onBack, onContinue }
                 checked={amount === tier}
                 onChange={setAmount}
                 title={<AmountText amount={tier} size="title" />}
-                subtitle={`Repay ${formatRs(tier + feeFor(tier))}, with a ${formatRs(feeFor(tier))} fee (3%)`}
+                subtitle={`Repay ${formatRs(tier + feeFor(tier))}, including a ${formatRs(feeFor(tier))} fee (3%)`}
               />
             ))}
           </div>
@@ -57,7 +57,7 @@ export default function OfferScreen({ initialAmount = null, onBack, onContinue }
           onClick={handleContinue}
           disabled={!amount}
           loading={checking}
-          loadingLabel="Checking your amount"
+          loadingLabel="Checking your amount…"
         >
           {amount ? `Continue with ${formatRs(amount)}` : "Pick an amount"}
         </Button>

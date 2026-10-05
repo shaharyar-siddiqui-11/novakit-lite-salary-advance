@@ -65,11 +65,13 @@ export default function TermsScreen({
 
   return (
     <>
-      <AppBar title="Salary advance" onBack={submitting ? null : onBack} />
+      <AppBar title="Salary advance" onBack={submitting || reloading ? null : onBack} />
 
       <main className="p-4 space-y-5">
         <Card className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
+            {/* Out of the layout flow, so it adds no space. */}
+            <h2 className="sr-only">What it costs</h2>
             <div>
               <div className="text-body text-neutral-700">You get today</div>
               <AmountText amount={amount} size="title" className="block font-bold" />
@@ -93,7 +95,7 @@ export default function TermsScreen({
               once it's here. Nothing has been taken or charged.
             </Panel>
             <div className="space-y-3">
-              <Button onClick={handleReload} loading={reloading} loadingLabel="Loading">
+              <Button onClick={handleReload} loading={reloading} loadingLabel="Loading your fee…">
                 Try again
               </Button>
               <Button variant="secondary" onClick={onDecline} disabled={reloading}>
@@ -104,17 +106,18 @@ export default function TermsScreen({
         ) : (
           <>
             <section className="px-1">
+              <h2 className="sr-only">What happens next</h2>
               <ListRow
                 leading="step"
-                title={`${payday}: repaid from your wallet`}
-                subtitle="We take it after your salary arrives. If there isn't enough, we take nothing and try again when it lands."
+                title={`Repaid from your wallet on ${payday}`}
+                subtitle="We take the repayment after your salary arrives. If there isn't enough, we take nothing and try again when it lands."
               />
               <ListRow
                 leading="step"
                 tone="muted"
                 last
                 title="If it's late: no late fee"
-                subtitle="You can't take another advance until it's repaid. After 30 days unpaid, it's recorded as a default, which means an unpaid loan."
+                subtitle="You can't take another advance until it's repaid. After 30 days unpaid, it's recorded as a default, meaning the advance wasn't repaid."
               />
             </section>
 
@@ -123,7 +126,7 @@ export default function TermsScreen({
                 confirm="hold"
                 onClick={handleAccept}
                 loading={submitting}
-                loadingLabel="Sending your advance"
+                loadingLabel="Sending your advance…"
                 holdHint={<AcceptLabel first="Keep holding to accept" total={total} date={paydayShort} />}
               >
                 <AcceptLabel first="Hold to accept" total={total} date={paydayShort} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AppBar,
   Card,
@@ -17,7 +17,7 @@ import { amountAfterCheck, feeFor, PAYDAY, formatDate, formatRs } from "./salary
 
 const SCENARIOS = [
   { id: "full", label: "Approved, full amount" },
-  { id: "less", label: "Approved, pays less" },
+  { id: "less", label: "Approved, pays less (pick Rs 10,000)" },
   { id: "income_unverified", label: "Declined: income not confirmed" },
   { id: "credit_score", label: "Declined: credit history" },
   { id: "other", label: "Declined: other reason" },
@@ -30,6 +30,7 @@ const DECLINES = ["income_unverified", "credit_score", "other"];
 
 // Late scenario: a Rs 10,000 advance, due on payday, not yet repaid.
 const LATE_TOTAL = 10000 + feeFor(10000);
+const BALANCE = 4250;
 
 /**
  * NovaPay home screen plus the salary-advance flow, in a mobile frame.
@@ -45,6 +46,24 @@ export default function App() {
   const [advance, setAdvance] = useState(null);
   // Prototype: with "Accept fails", only the first accept fails.
   const [acceptFailedOnce, setAcceptFailedOnce] = useState(false);
+  // An advance taken in this session. Home shows it after "Done".
+  const [active, setActive] = useState(null);
+  const frame = useRef(null);
+  const firstRender = useRef(true);
+
+  // On every screen change, move focus to the screen's main heading so a
+  // screen reader announces the new screen. Not on first load.
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    const heading = frame.current?.querySelector("main h2") || frame.current?.querySelector("h1");
+    if (heading) {
+      heading.setAttribute("tabindex", "-1");
+      heading.focus({ preventScroll: true });
+    }
+  }, [screen]);
 
   function go(next) {
     setScreen(next);
@@ -77,16 +96,18 @@ export default function App() {
         value={scenario}
         onChange={(id) => {
           setScenario(id);
+          setActive(null);
           reset();
         }}
       />
 
       {/* Mobile frame */}
-      <div className="relative w-full max-w-[390px] min-h-screen sm:min-h-[780px] bg-white sm:rounded-[28px] sm:shadow-xl overflow-hidden sm:border sm:border-neutral-300">
+      <div ref={frame} className="relative w-full max-w-[390px] min-h-screen sm:min-h-[780px] bg-white sm:rounded-[28px] sm:shadow-xl overflow-hidden sm:border sm:border-neutral-300">
         {screen === "home" && (
           <HomeScreen
             key={scenario}
             late={scenario === "late"}
+            active={active}
             failCheck={scenario === "fail_check"}
             onSeeOffer={handleSeeOffer}
             onSeeLate={() => go("late")}
@@ -120,6 +141,7 @@ export default function App() {
             onDecline={reset}
             onAccepted={(result) => {
               setAdvance(result);
+              setActive(result);
               go("success");
             }}
             onAcceptFailed={() => {
@@ -164,7 +186,7 @@ function ScenarioBar({ value, onChange }) {
   );
 }
 
-function HomeScreen({ late, failCheck, onSeeOffer, onSeeLate }) {
+function HomeScreen({ late, active, failCheck, onSeeOffer, onSeeLate }) {
   const [checking, setChecking] = useState(false);
   const [checkFailed, setCheckFailed] = useState(false);
   const [attempts, setAttempts] = useState(0);
@@ -194,11 +216,27 @@ function HomeScreen({ late, failCheck, onSeeOffer, onSeeLate }) {
         <Card>
           <div className="text-caption text-neutral-700">Available balance</div>
           <div className="mt-1">
-            <AmountText amount={4250} size="display" />
+            <AmountText amount={BALANCE + (active ? active.amount : 0)} size="display" />
           </div>
         </Card>
 
-        {late ? (
+        {active ? (
+          /* An advance taken this session: show it, don't invite another. */
+          <Card>
+            <div className="-my-3">
+              <ListRow
+                icon={<CalendarIcon />}
+                iconTone="brand"
+                title={<h2 className="font-semibold">Salary advance</h2>}
+                subtitle={
+                  <span className="text-body">
+                    {formatRs(active.total)} due on {formatDate(PAYDAY, { long: true })}.
+                  </span>
+                }
+              />
+            </div>
+          </Card>
+        ) : late ? (
           <Card className="space-y-3">
             <div className="-my-3">
               <ListRow
@@ -284,7 +322,7 @@ function EntryCard({ checking, checkFailed, onClick }) {
           }
         />
       </div>
-      <Button variant="secondary" onClick={onClick} loading={checking} loadingLabel="Checking">
+      <Button variant="secondary" onClick={onClick} loading={checking} loadingLabel="Checking…">
         {checkFailed ? "Try again" : "See if you can borrow"}
       </Button>
     </Card>

@@ -52,7 +52,7 @@ export default function LateScreen({ total, onBack }) {
             tone="muted"
             last
             title={`If it's still unpaid on ${formatDate(defaultDate(), { long: true })}`}
-            subtitle="It's recorded as a default, which means an unpaid loan."
+            subtitle="It's recorded as a default, meaning the advance wasn't repaid."
           />
         </section>
 

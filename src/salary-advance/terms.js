@@ -32,16 +32,24 @@ export function yearlyRatePercent(days) {
   return Math.round((FEE_RATE * 365 * 100) / days);
 }
 
-// Long form for sentences ("Tuesday 28 July").
+// Long form for sentences ("Tuesday, 28th July").
 // Short form only where space is tight ("28 Jul").
 export function formatDate(date, { long = false } = {}) {
-  const text = date.toLocaleDateString(
-    "en-GB",
-    long
-      ? { weekday: "long", day: "numeric", month: "long" }
-      : { day: "numeric", month: "short" }
-  );
-  return text.replace(/(\d+) /, "$1\u00A0"); // keep "25 July" on one line
+  if (!long) {
+    return date
+      .toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+      .replace(" ", "\u00A0");
+  }
+  const weekday = date.toLocaleDateString("en-GB", { weekday: "long" });
+  const month = date.toLocaleDateString("en-GB", { month: "long" });
+  // The whole date stays on one line.
+  return `${weekday},\u00A0${ordinal(date.getDate())}\u00A0${month}`;
+}
+
+function ordinal(n) {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return n + ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] || "th");
 }
 
 export function formatRs(amount) {

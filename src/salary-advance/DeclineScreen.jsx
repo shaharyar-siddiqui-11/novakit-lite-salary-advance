@@ -35,7 +35,7 @@ export default function DeclineScreen({ reason, onHome }) {
       body: "We can't share the reason for this decision. You can talk to our support team.",
       when: retry,
       note: "Your NovaPay wallet works as normal.",
-      primary: { label: "Contact support", onClick: showStub },
+      primary: { label: "Talk to support", onClick: showStub },
       secondary: { label: "Back to home", onClick: onHome },
     },
   }[reason];
