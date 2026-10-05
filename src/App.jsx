@@ -21,6 +21,9 @@ const SCENARIOS = [
   { id: "credit_score", label: "Declined: credit history" },
   { id: "other", label: "Declined: other reason" },
   { id: "late", label: "Repayment 4 days late" },
+  { id: "fail_check", label: "Error: check fails" },
+  { id: "fail_fee", label: "Error: fee doesn't load" },
+  { id: "fail_accept", label: "Error: Accept fails" },
 ];
 const DECLINES = ["income_unverified", "credit_score", "other"];
 
@@ -79,6 +82,7 @@ export default function App() {
         {screen === "home" && (
           <HomeScreen
             late={scenario === "late"}
+            failCheck={scenario === "fail_check"}
             onSeeOffer={handleSeeOffer}
             onSeeLate={() => go("late")}
           />
@@ -105,6 +109,8 @@ export default function App() {
         {screen === "terms" && (
           <TermsScreen
             amount={approved}
+            failFee={scenario === "fail_fee"}
+            failAccept={scenario === "fail_accept"}
             onBack={() => go(approved < requested ? "payLess" : "offer")}
             onDecline={reset}
             onAccepted={(result) => {
@@ -145,13 +151,26 @@ function ScenarioBar({ value, onChange }) {
   );
 }
 
-function HomeScreen({ late, onSeeOffer, onSeeLate }) {
+function HomeScreen({ late, failCheck, onSeeOffer, onSeeLate }) {
   const [checking, setChecking] = useState(false);
+  const [checkFailed, setCheckFailed] = useState(false);
+  const [attempts, setAttempts] = useState(0);
 
+  // Prototype: with failCheck, the first check fails and the second works.
   function handleClick() {
     if (checking) return;
     setChecking(true);
-    setTimeout(onSeeOffer, 1000);
+    setCheckFailed(false);
+    const attempt = attempts + 1;
+    setAttempts(attempt);
+    setTimeout(() => {
+      if (failCheck && attempt === 1) {
+        setChecking(false);
+        setCheckFailed(true);
+        return;
+      }
+      onSeeOffer();
+    }, 1000);
   }
 
   return (
@@ -184,12 +203,18 @@ function HomeScreen({ late, onSeeOffer, onSeeLate }) {
           <Card className="space-y-3">
             <div>
               <h2 className="text-body font-semibold text-neutral-900">Salary advance</h2>
-              <p className="text-body text-neutral-700">
-                Borrow until payday, for a one-time 3% fee.
-              </p>
+              {checkFailed ? (
+                <p role="alert" className="text-body text-neutral-900">
+                  We couldn't check right now. Nothing was taken or charged.
+                </p>
+              ) : (
+                <p className="text-body text-neutral-700">
+                  Borrow until payday, for a one-time 3% fee.
+                </p>
+              )}
             </div>
             <Button variant="secondary" onClick={handleClick} loading={checking} loadingLabel="Checking">
-              Check if you can borrow
+              {checkFailed ? "Try again" : "Check if you can borrow"}
             </Button>
           </Card>
         )}

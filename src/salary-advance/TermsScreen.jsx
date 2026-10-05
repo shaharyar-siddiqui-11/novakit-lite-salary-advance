@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { AppBar, Card, ListRow, Button, AmountText } from "../novakit";
+import { AppBar, Card, ListRow, Panel, Button, AmountText } from "../novakit";
 import {
   PAYDAY,
   feeFor,
@@ -14,23 +14,58 @@ import {
  * Key numbers first: what you get and what you repay, with dates, plus
  * the fee. Then what happens on payday and if it's late. Accept is
  * hold-to-confirm and its label repeats the amount and the date.
+ *
+ * Edge states (prototype flags, the second try always works):
+ *   failFee     the fee doesn't load: no "Rs 0", no Accept until it does
+ *   failAccept  the accept request fails: say nothing was paid out or
+ *               charged, and hold again to retry
  */
-export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
+export default function TermsScreen({
+  amount,
+  failFee = false,
+  failAccept = false,
+  onBack,
+  onDecline,
+  onAccepted,
+}) {
   const [submitting, setSubmitting] = useState(false);
+  const [acceptFailed, setAcceptFailed] = useState(false);
+  const [feeLoaded, setFeeLoaded] = useState(!failFee);
+  const [reloading, setReloading] = useState(false);
   const submitted = useRef(false);
+  const attempts = useRef(0);
 
-  const fee = feeFor(amount);
-  const total = amount + fee;
+  const fee = feeLoaded ? feeFor(amount) : null;
+  const total = fee === null ? null : amount + fee;
   const yearly = yearlyRatePercent(daysUntil(PAYDAY));
   const payday = formatDate(PAYDAY, { long: true });
   const paydayShort = formatDate(PAYDAY);
 
   function handleAccept() {
-    if (submitted.current) return; // a double tap must not submit twice
+    if (submitted.current || total === null) return; // never submit twice, never without numbers
     submitted.current = true;
     setSubmitting(true);
+    setAcceptFailed(false);
+    attempts.current += 1;
     // Stand-in for the real request.
-    setTimeout(() => onAccepted({ amount, fee, total }), 1200);
+    setTimeout(() => {
+      if (failAccept && attempts.current === 1) {
+        submitted.current = false;
+        setSubmitting(false);
+        setAcceptFailed(true);
+        return;
+      }
+      onAccepted({ amount, fee, total });
+    }, 1200);
+  }
+
+  function handleReload() {
+    if (reloading) return;
+    setReloading(true);
+    setTimeout(() => {
+      setReloading(false);
+      setFeeLoaded(true);
+    }, 1000);
   }
 
   return (
@@ -49,40 +84,68 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
               <AmountText amount={total} size="title" className="block font-bold" />
             </div>
           </div>
-          <p className="border-t border-neutral-200 pt-3 text-body text-neutral-700">
-            {formatRs(fee)} fee (3%), charged once. About {yearly}% as a yearly rate.
-          </p>
+          {feeLoaded ? (
+            <p className="border-t border-neutral-200 pt-3 text-body text-neutral-700">
+              {formatRs(fee)} fee (3%), charged once. About {yearly}% as a yearly rate.
+            </p>
+          ) : null}
         </Card>
 
-        <section className="px-1">
-          <ListRow
-            leading="step"
-            title={`${payday}: repaid from your wallet`}
-            subtitle="We take it after your salary arrives. If there isn't enough, we take nothing and try again when it lands."
-          />
-          <ListRow
-            leading="step"
-            tone="muted"
-            last
-            title="If it's late: no late fee"
-            subtitle="You can't take another advance until it's repaid. After 30 days unpaid, it's recorded as a default, which means an unpaid loan."
-          />
-        </section>
+        {!feeLoaded ? (
+          <>
+            <Panel role="alert">
+              We couldn't load your fee, so we can't show what you'd repay. You can accept
+              once it's here. Nothing has been taken or charged.
+            </Panel>
+            <div className="space-y-3">
+              <Button onClick={handleReload} loading={reloading} loadingLabel="Loading">
+                Try again
+              </Button>
+              <Button variant="secondary" onClick={onDecline} disabled={reloading}>
+                No thanks
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <section className="px-1">
+              <ListRow
+                leading="step"
+                title={`${payday}: repaid from your wallet`}
+                subtitle="We take it after your salary arrives. If there isn't enough, we take nothing and try again when it lands."
+              />
+              <ListRow
+                leading="step"
+                tone="muted"
+                last
+                title="If it's late: no late fee"
+                subtitle="You can't take another advance until it's repaid. After 30 days unpaid, it's recorded as a default, which means an unpaid loan."
+              />
+            </section>
 
-        <div className="space-y-3">
-          <Button
-            confirm="hold"
-            onClick={handleAccept}
-            loading={submitting}
-            loadingLabel="Sending your advance"
-            holdHint={<AcceptLabel first="Keep holding to accept" total={total} date={paydayShort} />}
-          >
-            <AcceptLabel first="Hold to accept" total={total} date={paydayShort} />
-          </Button>
-          <Button variant="secondary" onClick={onDecline} disabled={submitting}>
-            No thanks
-          </Button>
-        </div>
+            {acceptFailed ? (
+              <Panel role="alert">
+                Your advance didn't go through. Nothing was paid out, taken or charged.
+                Hold the button to try again.
+              </Panel>
+            ) : null}
+
+            <div className="space-y-3">
+              <Button
+                confirm="hold"
+                onClick={handleAccept}
+                loading={submitting}
+                loadingLabel="Sending your advance"
+                holdHint={<AcceptLabel first="Keep holding to accept" total={total} date={paydayShort} />}
+              >
+                <AcceptLabel first="Hold to accept" total={total} date={paydayShort} />
+              </Button>
+              <Button variant="secondary" onClick={onDecline} disabled={submitting}>
+                No thanks
+              </Button>
+            </div>
+          </>
+        )}
       </main>
     </>
   );
