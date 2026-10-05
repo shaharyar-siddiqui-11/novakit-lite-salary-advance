@@ -6,42 +6,82 @@ import {
   Button,
   AmountText,
 } from "./novakit";
+import OfferScreen from "./salary-advance/OfferScreen.jsx";
+import PayLessScreen from "./salary-advance/PayLessScreen.jsx";
 import TermsScreen from "./salary-advance/TermsScreen.jsx";
 import SuccessScreen from "./salary-advance/SuccessScreen.jsx";
+import { amountAfterCheck } from "./salary-advance/terms";
+
+const SCENARIOS = [
+  { id: "full", label: "Full amount" },
+  { id: "less", label: "Pays less" },
+];
 
 /**
  * NovaPay home screen plus the salary-advance flow, in a mobile frame.
  * On a real phone the frame fills the screen; on wider screens it shows
- * as a 390px device.
+ * as a 390px device. The scenario bar above the frame is for reviewers
+ * and is not part of the app.
  */
 export default function App() {
+  const [scenario, setScenario] = useState("full");
   const [screen, setScreen] = useState("home");
+  const [requested, setRequested] = useState(null);
+  const [approved, setApproved] = useState(null);
   const [advance, setAdvance] = useState(null);
-
-  // Until the amount picker exists, the offer opens straight on Rs 10,000.
-  const amount = 10000;
-
-  function goHome() {
-    setScreen("home");
-    window.scrollTo(0, 0);
-  }
 
   function go(next) {
     setScreen(next);
     window.scrollTo(0, 0);
   }
 
+  function reset() {
+    setRequested(null);
+    setApproved(null);
+    setAdvance(null);
+    go("home");
+  }
+
+  function handleChecked(amount) {
+    const result = amountAfterCheck(amount, scenario);
+    setRequested(amount);
+    setApproved(result);
+    go(result < amount ? "payLess" : "terms");
+  }
+
   return (
-    <div className="min-h-screen w-full flex justify-center sm:py-6">
+    <div className="min-h-screen w-full flex flex-col items-center sm:py-6 sm:gap-4">
+      <ScenarioBar
+        value={scenario}
+        onChange={(id) => {
+          setScenario(id);
+          reset();
+        }}
+      />
+
       {/* Mobile frame */}
       <div className="relative w-full max-w-[390px] min-h-screen sm:min-h-[780px] bg-white sm:rounded-[28px] sm:shadow-xl overflow-hidden sm:border sm:border-neutral-300">
-        {screen === "home" && <HomeScreen onSeeOffer={() => go("terms")} />}
+        {screen === "home" && <HomeScreen onSeeOffer={() => go("offer")} />}
+
+        {screen === "offer" && (
+          <OfferScreen initialAmount={requested} onBack={reset} onContinue={handleChecked} />
+        )}
+
+        {screen === "payLess" && (
+          <PayLessScreen
+            requested={requested}
+            amount={approved}
+            onBack={() => go("offer")}
+            onContinue={() => go("terms")}
+            onDecline={reset}
+          />
+        )}
 
         {screen === "terms" && (
           <TermsScreen
-            amount={amount}
-            onBack={goHome}
-            onDecline={goHome}
+            amount={approved}
+            onBack={() => go(approved < requested ? "payLess" : "offer")}
+            onDecline={reset}
             onAccepted={(result) => {
               setAdvance(result);
               go("success");
@@ -52,12 +92,39 @@ export default function App() {
         {screen === "success" && advance && (
           <SuccessScreen
             amount={advance.amount}
-            fee={advance.fee}
             total={advance.total}
-            onDone={goHome}
+            onDone={reset}
           />
         )}
       </div>
+    </div>
+  );
+}
+
+function ScenarioBar({ value, onChange }) {
+  return (
+    <div
+      role="group"
+      aria-label="Prototype scenario"
+      className="w-full max-w-[390px] px-4 py-2 sm:px-0 sm:py-0 flex items-center gap-2 text-caption text-neutral-700"
+    >
+      <span className="shrink-0">Prototype:</span>
+      {SCENARIOS.map((s) => (
+        <button
+          key={s.id}
+          type="button"
+          aria-pressed={value === s.id}
+          onClick={() => onChange(s.id)}
+          className={
+            "min-h-9 px-3 whitespace-nowrap rounded-full border focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand " +
+            (value === s.id
+              ? "bg-neutral-900 text-white border-neutral-900"
+              : "bg-white text-neutral-900 border-neutral-500")
+          }
+        >
+          {s.label}
+        </button>
+      ))}
     </div>
   );
 }

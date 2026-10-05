@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
-import { AppBar, Card, Button, AmountText, Timeline } from "../novakit";
+import { AppBar, Card, ListRow, Button, AmountText } from "../novakit";
 import {
-  TODAY,
   PAYDAY,
   feeFor,
   daysUntil,
@@ -12,10 +11,9 @@ import {
 
 /**
  * Terms and accept, on one screen.
- * Top: what you get, what you repay and when, side by side.
- * Then a timeline of what happens next, including the payday pull and
- * what happens if it's late. Accept is hold-to-confirm and its label
- * repeats the amount and the date.
+ * Key numbers first: what you get and what you repay, with dates, plus
+ * the fee. Then what happens on payday and if it's late. Accept is
+ * hold-to-confirm and its label repeats the amount and the date.
  */
 export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +22,7 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
   const fee = feeFor(amount);
   const total = amount + fee;
   const yearly = yearlyRatePercent(daysUntil(PAYDAY));
-  const payday = formatDate(PAYDAY, { weekday: true });
+  const payday = formatDate(PAYDAY, { long: true });
   const paydayShort = formatDate(PAYDAY);
 
   function handleAccept() {
@@ -35,43 +33,20 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
     setTimeout(() => onAccepted({ amount, fee, total }), 1200);
   }
 
-  const steps = [
-    {
-      key: "today",
-      when: `Today, ${formatDate(TODAY)}`,
-      title: `${formatRs(amount)} lands in your wallet`,
-    },
-    {
-      key: "payday",
-      when: `${payday}, your payday`,
-      title: `We take ${formatRs(total)} after your salary arrives`,
-      body: "Not enough in your wallet? We take nothing, let you know, and try again when it lands.",
-    },
-    {
-      key: "late",
-      tone: "muted",
-      when: "If it's late",
-      title: "No late fee",
-      body: "You can't take another advance until this one is repaid. After 30 days unpaid, it's recorded as a default, which means an unpaid loan.",
-    },
-  ];
-
   return (
     <>
       <AppBar title="Salary advance" onBack={submitting ? null : onBack} />
 
-      <main className="p-4 space-y-4">
+      <main className="p-4 space-y-5">
         <Card className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-caption text-neutral-700">You get</div>
+              <div className="text-body text-neutral-700">You get today</div>
               <AmountText amount={amount} size="title" className="block font-bold" />
-              <div className="text-body text-neutral-700">today</div>
             </div>
             <div>
-              <div className="text-caption text-neutral-700">You repay</div>
+              <div className="text-body text-neutral-700">You repay on {paydayShort}</div>
               <AmountText amount={total} size="title" className="block font-bold" />
-              <div className="text-body text-neutral-700">on {payday}</div>
             </div>
           </div>
           <p className="border-t border-neutral-200 pt-3 text-body text-neutral-700">
@@ -80,11 +55,21 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
         </Card>
 
         <section className="px-1">
-          <h2 className="text-body font-semibold text-neutral-900 mb-3">What happens next</h2>
-          <Timeline items={steps} />
+          <ListRow
+            leading="step"
+            title={`${payday}: repaid from your wallet`}
+            subtitle="We take it after your salary arrives. If there isn't enough, we take nothing and try again when it lands."
+          />
+          <ListRow
+            leading="step"
+            tone="muted"
+            last
+            title="If it's late: no late fee"
+            subtitle="You can't take another advance until it's repaid. After 30 days unpaid, it's recorded as a default, which means an unpaid loan."
+          />
         </section>
 
-        <div className="space-y-3 pt-1 pb-2">
+        <div className="space-y-3">
           <Button
             confirm="hold"
             onClick={handleAccept}

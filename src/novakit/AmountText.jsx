@@ -4,8 +4,9 @@
  *
  * A missing amount never renders as "Rs 0". In a cost disclosure, a fee
  * that failed to load must not read as free.
+ * Tone: default | muted (for a figure that is context, not the answer).
  */
-export default function AmountText({ amount, size = "title", className = "" }) {
+export default function AmountText({ amount, size = "title", tone = "default", className = "" }) {
   const sizes = {
     display: "text-display",
     title: "text-title",
@@ -19,7 +20,7 @@ export default function AmountText({ amount, size = "title", className = "" }) {
 
   const formatted = new Intl.NumberFormat("en-PK").format(amount);
   return (
-    <span className={`${sizeClass} text-neutral-900 tabular-nums ${className}`}>
+    <span className={`${sizeClass} ${tone === "muted" ? "text-neutral-700" : "text-neutral-900"} tabular-nums ${className}`}>
       Rs&nbsp;{formatted}
     </span>
   );

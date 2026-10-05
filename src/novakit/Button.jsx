@@ -17,7 +17,8 @@ import { useEffect, useRef, useState } from "react";
  * Pointer users press and hold for `holdMs`; a fill shows progress and
  * letting go early cancels and shows `holdHint` for a moment. Keyboard and
  * assistive-tech activation (Enter, Space, screen-reader "activate")
- * confirms straight away.
+ * confirms straight away. Hold buttons have no pressed colour: the fill
+ * is the pressed feedback.
  */
 export default function Button({
   children,
@@ -57,14 +58,17 @@ export default function Button({
   };
 
   const variants = {
-    primary:
-      "bg-brand text-white active:bg-brand-pressed disabled:bg-neutral-300 disabled:text-neutral-700",
-    secondary:
-      "bg-white text-neutral-900 border border-neutral-500 active:bg-neutral-100 disabled:text-neutral-500 disabled:border-neutral-300",
+    primary: {
+      rest: "bg-brand text-white disabled:bg-neutral-300 disabled:text-neutral-700",
+      pressed: "active:bg-brand-pressed",
+    },
+    secondary: {
+      rest: "bg-white text-neutral-900 border border-neutral-500 disabled:text-neutral-500 disabled:border-neutral-300",
+      pressed: "active:bg-neutral-100",
+    },
   };
-
-  // The hold fill does the "pressed" job, so the pressed colour is turned off.
-  const holdVariant = hold ? "active:bg-brand [-webkit-touch-callout:none]" : "";
+  const v = variants[variant];
+  const look = hold ? `${v.rest} [-webkit-touch-callout:none]` : `${v.rest} ${v.pressed}`;
 
   function startHold(e) {
     if (!hold || loading || disabled || e.button > 0) return;
@@ -110,11 +114,12 @@ export default function Button({
       onPointerLeave={cancelHold}
       onPointerCancel={cancelHold}
       onContextMenu={hold ? (e) => e.preventDefault() : undefined}
-      className={`${base} ${sizes[size]} ${variants[variant]} ${holdVariant} ${loading ? "cursor-wait" : ""} ${className}`}
+      className={`${base} ${sizes[size]} ${look} ${loading ? "cursor-wait" : ""} ${className}`}
     >
       {hold && !loading ? (
         <span
           aria-hidden="true"
+          data-hold-fill
           className="absolute inset-0 origin-left bg-brand-pressed"
           style={{
             transform: `scaleX(${holding ? 1 : 0})`,
