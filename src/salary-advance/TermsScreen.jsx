@@ -127,7 +127,8 @@ export default function TermsScreen({
                 onClick={handleAccept}
                 loading={submitting}
                 loadingLabel="Sending your advance…"
-                holdHint={<AcceptLabel first="Keep holding to accept" total={total} date={paydayShort} />}
+                armedLabel={<AcceptLabel first="Tap again to accept" total={total} date={paydayShort} />}
+                armedAnnouncement="Tap again to accept"
               >
                 <AcceptLabel first="Hold to accept" total={total} date={paydayShort} />
               </Button>
