@@ -65,3 +65,13 @@ export function retryDate() {
   d.setDate(d.getDate() + RETRY_DAYS);
   return d;
 }
+
+// Late scenario: the payday pull didn't happen (not enough in the wallet).
+export const LATE_TODAY = new Date(2026, 7, 1); // Sat 1 Aug 2026, 4 days late
+export const DEFAULT_AFTER_DAYS = 30;
+
+export function defaultDate() {
+  const d = new Date(PAYDAY);
+  d.setDate(d.getDate() + DEFAULT_AFTER_DAYS);
+  return d;
+}

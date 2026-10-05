@@ -11,7 +11,8 @@ import PayLessScreen from "./salary-advance/PayLessScreen.jsx";
 import TermsScreen from "./salary-advance/TermsScreen.jsx";
 import SuccessScreen from "./salary-advance/SuccessScreen.jsx";
 import DeclineScreen from "./salary-advance/DeclineScreen.jsx";
-import { amountAfterCheck } from "./salary-advance/terms";
+import LateScreen from "./salary-advance/LateScreen.jsx";
+import { amountAfterCheck, feeFor, PAYDAY, formatDate, formatRs } from "./salary-advance/terms";
 
 const SCENARIOS = [
   { id: "full", label: "Approved, full amount" },
@@ -19,8 +20,12 @@ const SCENARIOS = [
   { id: "income_unverified", label: "Declined: income not confirmed" },
   { id: "credit_score", label: "Declined: credit history" },
   { id: "other", label: "Declined: other reason" },
+  { id: "late", label: "Repayment 4 days late" },
 ];
 const DECLINES = ["income_unverified", "credit_score", "other"];
+
+// Late scenario: a Rs 10,000 advance, due on payday, not yet repaid.
+const LATE_TOTAL = 10000 + feeFor(10000);
 
 /**
  * NovaPay home screen plus the salary-advance flow, in a mobile frame.
@@ -71,7 +76,15 @@ export default function App() {
 
       {/* Mobile frame */}
       <div className="relative w-full max-w-[390px] min-h-screen sm:min-h-[780px] bg-white sm:rounded-[28px] sm:shadow-xl overflow-hidden sm:border sm:border-neutral-300">
-        {screen === "home" && <HomeScreen onSeeOffer={handleSeeOffer} />}
+        {screen === "home" && (
+          <HomeScreen
+            late={scenario === "late"}
+            onSeeOffer={handleSeeOffer}
+            onSeeLate={() => go("late")}
+          />
+        )}
+
+        {screen === "late" && <LateScreen total={LATE_TOTAL} onBack={reset} />}
 
         {screen === "declined" && <DeclineScreen reason={scenario} onHome={reset} />}
 
@@ -132,7 +145,7 @@ function ScenarioBar({ value, onChange }) {
   );
 }
 
-function HomeScreen({ onSeeOffer }) {
+function HomeScreen({ late, onSeeOffer, onSeeLate }) {
   const [checking, setChecking] = useState(false);
 
   function handleClick() {
@@ -147,28 +160,42 @@ function HomeScreen({ onSeeOffer }) {
 
       <main className="p-4 space-y-4">
         <Card>
-          <div className="text-caption text-neutral-500">Available balance</div>
+          <div className="text-caption text-neutral-700">Available balance</div>
           <div className="mt-1">
             <AmountText amount={4250} size="display" />
           </div>
         </Card>
 
-        {/* Salary advance entry: easy to find, no push (decision 8).
-            No amount shown before the check has run. */}
-        <Card className="space-y-3">
-          <div>
-            <h2 className="text-body font-semibold text-neutral-900">Salary advance</h2>
-            <p className="text-body text-neutral-700">
-              Borrow until payday, for a one-time 3% fee.
-            </p>
-          </div>
-          <Button variant="secondary" onClick={handleClick} loading={checking} loadingLabel="Checking">
-            Check if you can borrow
-          </Button>
-        </Card>
+        {late ? (
+          <Card className="space-y-3">
+            <div>
+              <h2 className="text-body font-semibold text-neutral-900">Salary advance</h2>
+              <p className="text-body text-neutral-700">
+                {formatRs(LATE_TOTAL)} was due on {formatDate(PAYDAY, { long: true })}.
+              </p>
+            </div>
+            <Button variant="secondary" onClick={onSeeLate}>
+              See where things stand
+            </Button>
+          </Card>
+        ) : (
+          /* Salary advance entry: easy to find, no push (decision 8).
+             No amount shown before the check has run. */
+          <Card className="space-y-3">
+            <div>
+              <h2 className="text-body font-semibold text-neutral-900">Salary advance</h2>
+              <p className="text-body text-neutral-700">
+                Borrow until payday, for a one-time 3% fee.
+              </p>
+            </div>
+            <Button variant="secondary" onClick={handleClick} loading={checking} loadingLabel="Checking">
+              Check if you can borrow
+            </Button>
+          </Card>
+        )}
 
         <Card>
-          <div className="text-caption text-neutral-500 mb-1">Recent activity</div>
+          <div className="text-caption text-neutral-700 mb-1">Recent activity</div>
           <ListRow
             icon="↑"
             title="Sent to Ahmed K."
