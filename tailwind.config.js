@@ -34,6 +34,13 @@ export default {
           900: "#1A1A1A",
         },
         success: "#1E9E5A",
+        // Error — only for a money action that failed (e.g. an advance
+        // that didn't go through). Late repayments and loading problems
+        // stay calm and don't use it.
+        error: {
+          50: "#FEF3F2",
+          DEFAULT: "#B42318", // 6.6:1 on white, 6.1:1 on error-50
+        },
       },
       borderRadius: {
         sm: "8px",

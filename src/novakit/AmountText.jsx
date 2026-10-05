@@ -1,17 +1,27 @@
 /**
  * AmountText — NovaKit Lite
  * Formats an integer PKR amount, e.g. 10000 -> "Rs 10,000".
+ *
+ * A missing amount never renders as "Rs 0". In a cost disclosure, a fee
+ * that failed to load must not read as free.
+ * Tone: default | muted (for a figure that is context, not the answer).
  */
-export default function AmountText({ amount, size = "title", className = "" }) {
+export default function AmountText({ amount, size = "title", tone = "default", className = "" }) {
   const sizes = {
     display: "text-display",
     title: "text-title",
     body: "text-body",
   };
-  const formatted = new Intl.NumberFormat("en-PK").format(amount ?? 0);
+  const sizeClass = sizes[size] || sizes.title;
+
+  if (typeof amount !== "number" || !Number.isFinite(amount)) {
+    return <span className={`${sizeClass} text-neutral-700 ${className}`}>Unavailable</span>;
+  }
+
+  const formatted = new Intl.NumberFormat("en-PK").format(amount);
   return (
-    <span className={`${sizes[size] || sizes.title} text-neutral-900 ${className}`}>
-      Rs {formatted}
+    <span className={`${sizeClass} ${tone === "muted" ? "text-neutral-700" : "text-neutral-900"} tabular-nums ${className}`}>
+      Rs&nbsp;{formatted}
     </span>
   );
 }
