@@ -50,7 +50,12 @@ export default function App() {
         )}
 
         {screen === "success" && advance && (
-          <SuccessScreen amount={advance.amount} total={advance.total} onDone={goHome} />
+          <SuccessScreen
+            amount={advance.amount}
+            fee={advance.fee}
+            total={advance.total}
+            onDone={goHome}
+          />
         )}
       </div>
     </div>

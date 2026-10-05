@@ -14,7 +14,8 @@ import {
  * Terms and accept, on one screen.
  * Top: what you get, what you repay and when, side by side.
  * Then a timeline of what happens next, including the payday pull and
- * the default rule. The Accept label repeats the amount and the date.
+ * what happens if it's late. Accept is hold-to-confirm and its label
+ * repeats the amount and the date.
  */
 export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
   const [submitting, setSubmitting] = useState(false);
@@ -47,11 +48,11 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
       body: "Not enough in your wallet? We take nothing, let you know, and try again when it lands.",
     },
     {
-      key: "default",
+      key: "late",
       tone: "muted",
-      when: "If it's still unpaid 30 days later",
-      title: "It's marked as default",
-      body: "No late fee. You just can't take another advance until it's repaid.",
+      when: "If it's late",
+      title: "No late fee",
+      body: "You can't take another advance until this one is repaid.",
     },
   ];
 
@@ -74,7 +75,7 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
             </div>
           </div>
           <p className="border-t border-neutral-200 pt-3 text-body text-neutral-700">
-            {formatRs(fee)} fee, charged once. About {yearly}% as a yearly rate.
+            {formatRs(fee)} fee (3%), charged once. About {yearly}% as a yearly rate.
           </p>
         </Card>
 
@@ -85,11 +86,17 @@ export default function TermsScreen({ amount, onBack, onDecline, onAccepted }) {
 
         <div className="space-y-3 pt-1 pb-2">
           <Button
+            confirm="hold"
             onClick={handleAccept}
             loading={submitting}
             loadingLabel="Sending your advance"
           >
-            Accept · repay {formatRs(total)} on {paydayShort}
+            <span className="flex flex-col leading-tight">
+              <span>Hold to accept</span>
+              <span className="font-normal">
+                Repay {formatRs(total)} on {paydayShort}
+              </span>
+            </span>
           </Button>
           <Button variant="secondary" onClick={onDecline} disabled={submitting}>
             No thanks
