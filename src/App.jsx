@@ -59,7 +59,7 @@ export default function App() {
     go("home");
   }
 
-  // Stand-in for the eligibility check behind "Check if you can borrow".
+  // Stand-in for the eligibility check behind "See if you can borrow".
   function handleSeeOffer() {
     go(DECLINES.includes(scenario) ? "declined" : "offer");
   }
@@ -200,11 +200,17 @@ function HomeScreen({ late, failCheck, onSeeOffer, onSeeLate }) {
 
         {late ? (
           <Card className="space-y-3">
-            <div>
-              <h2 className="text-body font-semibold text-neutral-900">Salary advance</h2>
-              <p className="text-body text-neutral-700">
-                {formatRs(LATE_TOTAL)} was due on {formatDate(PAYDAY, { long: true })}.
-              </p>
+            <div className="-my-3">
+              <ListRow
+                icon={<CalendarIcon />}
+                iconTone="brand"
+                title={<h2 className="font-semibold">Salary advance</h2>}
+                subtitle={
+                  <span className="text-body">
+                    {formatRs(LATE_TOTAL)} was due on {formatDate(PAYDAY, { long: true })}.
+                  </span>
+                }
+              />
             </div>
             <Button variant="secondary" onClick={onSeeLate}>
               See where things stand
@@ -213,23 +219,11 @@ function HomeScreen({ late, failCheck, onSeeOffer, onSeeLate }) {
         ) : (
           /* Salary advance entry: easy to find, no push (decision 8).
              No amount shown before the check has run. */
-          <Card className="space-y-3">
-            <div>
-              <h2 className="text-body font-semibold text-neutral-900">Salary advance</h2>
-              {checkFailed ? (
-                <p role="alert" className="text-body text-neutral-900">
-                  We couldn't check right now.
-                </p>
-              ) : (
-                <p className="text-body text-neutral-700">
-                  Borrow until payday, for a one-time 3% fee.
-                </p>
-              )}
-            </div>
-            <Button variant="secondary" onClick={handleClick} loading={checking} loadingLabel="Checking">
-              {checkFailed ? "Try again" : "Check if you can borrow"}
-            </Button>
-          </Card>
+          <EntryCard
+            checking={checking}
+            checkFailed={checkFailed}
+            onClick={handleClick}
+          />
         )}
 
         <Card>
@@ -255,5 +249,44 @@ function HomeScreen({ late, failCheck, onSeeOffer, onSeeLate }) {
         </Card>
       </main>
     </>
+  );
+}
+
+// Calendar icon for the salary-advance card ("until payday").
+// The kit has no icon set, so it lives here as a plain SVG.
+function CalendarIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <rect x="3.5" y="5" width="17" height="15" rx="2.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* Salary advance entry: easy to find, no push (decision 8). The icon
+   gives it a face. No amount shown before the check has run. */
+function EntryCard({ checking, checkFailed, onClick }) {
+  return (
+    <Card className="space-y-3">
+      <div className="-my-3">
+        <ListRow
+          icon={<CalendarIcon />}
+          iconTone="brand"
+          title={<h2 className="font-semibold">Salary advance</h2>}
+          subtitle={
+            checkFailed ? (
+              <span role="alert" className="text-body text-neutral-900">
+                We couldn't check right now.
+              </span>
+            ) : (
+              <span className="text-body">Borrow until payday, for a one-time 3%&nbsp;fee.</span>
+            )
+          }
+        />
+      </div>
+      <Button variant="secondary" onClick={onClick} loading={checking} loadingLabel="Checking">
+        {checkFailed ? "Try again" : "See if you can borrow"}
+      </Button>
+    </Card>
   );
 }

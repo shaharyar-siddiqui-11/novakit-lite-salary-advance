@@ -4,7 +4,10 @@
  *
  * Leading types:
  *   icon  (default) a round icon; rows are divided by a line. For lists
- *         like recent activity.
+ *         like recent activity. iconTone="brand" (light indigo circle,
+ *         indigo icon) gives a feature its face, e.g. the salary-advance
+ *         card on home. Text is cut off when there's a trailing amount,
+ *         and wraps when there isn't.
  *   step  a dot joined to the next row by a line; text wraps. For a short
  *         timeline. tone="muted" gives a hollow dot for a step that only
  *         happens if something goes wrong (quieter, not hidden).
@@ -15,6 +18,7 @@
 export default function ListRow({
   leading = "icon",
   icon = null,
+  iconTone = "default",
   title,
   subtitle,
   trailing = null,
@@ -92,14 +96,22 @@ export default function ListRow({
       }
     >
       {icon ? (
-        <div className="h-9 w-9 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-700 shrink-0">
+        <div
+          aria-hidden="true"
+          className={
+            "h-9 w-9 rounded-full flex items-center justify-center shrink-0 " +
+            (iconTone === "brand" ? "bg-brand-50 text-brand" : "bg-neutral-100 text-neutral-700")
+          }
+        >
           {icon}
         </div>
       ) : null}
       <div className="min-w-0 flex-1">
-        <div className="text-body text-neutral-900 truncate">{title}</div>
+        <div className={"text-body text-neutral-900 " + (trailing ? "truncate" : "")}>{title}</div>
         {subtitle ? (
-          <div className="text-caption text-neutral-700 truncate">{subtitle}</div>
+          <div className={"text-caption text-neutral-700 " + (trailing ? "truncate" : "")}>
+            {subtitle}
+          </div>
         ) : null}
       </div>
       {trailing ? <div className="shrink-0">{trailing}</div> : null}
