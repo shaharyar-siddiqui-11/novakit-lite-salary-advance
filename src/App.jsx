@@ -12,6 +12,7 @@ import TermsScreen from "./salary-advance/TermsScreen.jsx";
 import SuccessScreen from "./salary-advance/SuccessScreen.jsx";
 import DeclineScreen from "./salary-advance/DeclineScreen.jsx";
 import LateScreen from "./salary-advance/LateScreen.jsx";
+import AcceptFailedScreen from "./salary-advance/AcceptFailedScreen.jsx";
 import { amountAfterCheck, feeFor, PAYDAY, formatDate, formatRs } from "./salary-advance/terms";
 
 const SCENARIOS = [
@@ -42,6 +43,8 @@ export default function App() {
   const [requested, setRequested] = useState(null);
   const [approved, setApproved] = useState(null);
   const [advance, setAdvance] = useState(null);
+  // Prototype: with "Accept fails", only the first accept fails.
+  const [acceptFailedOnce, setAcceptFailedOnce] = useState(false);
 
   function go(next) {
     setScreen(next);
@@ -52,6 +55,7 @@ export default function App() {
     setRequested(null);
     setApproved(null);
     setAdvance(null);
+    setAcceptFailedOnce(false);
     go("home");
   }
 
@@ -81,6 +85,7 @@ export default function App() {
       <div className="relative w-full max-w-[390px] min-h-screen sm:min-h-[780px] bg-white sm:rounded-[28px] sm:shadow-xl overflow-hidden sm:border sm:border-neutral-300">
         {screen === "home" && (
           <HomeScreen
+            key={scenario}
             late={scenario === "late"}
             failCheck={scenario === "fail_check"}
             onSeeOffer={handleSeeOffer}
@@ -110,14 +115,22 @@ export default function App() {
           <TermsScreen
             amount={approved}
             failFee={scenario === "fail_fee"}
-            failAccept={scenario === "fail_accept"}
+            failAccept={scenario === "fail_accept" && !acceptFailedOnce}
             onBack={() => go(approved < requested ? "payLess" : "offer")}
             onDecline={reset}
             onAccepted={(result) => {
               setAdvance(result);
               go("success");
             }}
+            onAcceptFailed={() => {
+              setAcceptFailedOnce(true);
+              go("acceptFailed");
+            }}
           />
+        )}
+
+        {screen === "acceptFailed" && (
+          <AcceptFailedScreen onRetry={() => go("terms")} onHome={reset} />
         )}
 
         {screen === "success" && advance && (
@@ -205,7 +218,7 @@ function HomeScreen({ late, failCheck, onSeeOffer, onSeeLate }) {
               <h2 className="text-body font-semibold text-neutral-900">Salary advance</h2>
               {checkFailed ? (
                 <p role="alert" className="text-body text-neutral-900">
-                  We couldn't check right now. Nothing was taken or charged.
+                  We couldn't check right now.
                 </p>
               ) : (
                 <p className="text-body text-neutral-700">

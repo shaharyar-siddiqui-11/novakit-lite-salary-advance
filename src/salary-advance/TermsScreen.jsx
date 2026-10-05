@@ -17,8 +17,8 @@ import {
  *
  * Edge states (prototype flags, the second try always works):
  *   failFee     the fee doesn't load: no "Rs 0", no Accept until it does
- *   failAccept  the accept request fails: say nothing was paid out or
- *               charged, and hold again to retry
+ *   failAccept  the accept request fails: hand over to the
+ *               accept-failed screen (onAcceptFailed)
  */
 export default function TermsScreen({
   amount,
@@ -27,13 +27,12 @@ export default function TermsScreen({
   onBack,
   onDecline,
   onAccepted,
+  onAcceptFailed,
 }) {
   const [submitting, setSubmitting] = useState(false);
-  const [acceptFailed, setAcceptFailed] = useState(false);
   const [feeLoaded, setFeeLoaded] = useState(!failFee);
   const [reloading, setReloading] = useState(false);
   const submitted = useRef(false);
-  const attempts = useRef(0);
 
   const fee = feeLoaded ? feeFor(amount) : null;
   const total = fee === null ? null : amount + fee;
@@ -45,14 +44,10 @@ export default function TermsScreen({
     if (submitted.current || total === null) return; // never submit twice, never without numbers
     submitted.current = true;
     setSubmitting(true);
-    setAcceptFailed(false);
-    attempts.current += 1;
     // Stand-in for the real request.
     setTimeout(() => {
-      if (failAccept && attempts.current === 1) {
-        submitted.current = false;
-        setSubmitting(false);
-        setAcceptFailed(true);
+      if (failAccept) {
+        onAcceptFailed();
         return;
       }
       onAccepted({ amount, fee, total });
@@ -122,13 +117,6 @@ export default function TermsScreen({
                 subtitle="You can't take another advance until it's repaid. After 30 days unpaid, it's recorded as a default, which means an unpaid loan."
               />
             </section>
-
-            {acceptFailed ? (
-              <Panel role="alert">
-                Your advance didn't go through. Nothing was paid out, taken or charged.
-                Hold the button to try again.
-              </Panel>
-            ) : null}
 
             <div className="space-y-3">
               <Button
